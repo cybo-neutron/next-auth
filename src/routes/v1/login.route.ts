@@ -1,3 +1,4 @@
+import { verifyPassword } from "../../utils/encyption";
 import { prisma } from "../../client/prismaClient";
 import { Request, Response, Router } from "express";
 
@@ -15,13 +16,24 @@ router.post("/", async (req: Request, res: Response)  => {
   console.log({email,password})
 
   try {
-    
-    const user = await prisma.user.findFirst({
+    //find user
+    const user  = await prisma.user.findFirst({
       where: {
         email,
-        password
       }
     })
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      })
+    }
+    //verify user
+    const verifyPass = await verifyPassword(password, user.password);
+    if (!verifyPass) {
+      return res.status(401).json({
+        message : "email or password doesn't match"
+      })
+    }
 
     return res.status(200).send(user)
 
